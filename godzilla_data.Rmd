@@ -1,0 +1,330 @@
+---
+title: "godzilla_data"
+author: "Edwin Lee"
+date: "2023-09-30"
+output: html_document
+---
+
+```{r Install tidyverse package}
+
+install.packages("tidyverse")
+
+```
+
+```{r Call tidyverse package}
+
+library(tidyverse)
+library(broom)
+
+```
+
+
+```{r Define the palette}
+
+palette = c("#922B21", "#1F618D", "#6C3483", "#1E8449", "#AF601A")
+
+```
+
+
+```{r Create the series}
+
+godzilla_height = c(50,50,50,50,50,50,55,55,60,60,80,80,100,100,100,108,118.5,318)
+
+```
+
+```{r Convert the series into a tibble}
+
+godzilla_height_df = tibble(height = godzilla_height)
+godzilla_height_df
+
+```
+
+```{r Create the frequency table}
+
+godzilla_height_frequency = godzilla_height_df %>% 
+  group_by(height) %>% 
+  summarise(frequency = n())
+
+godzilla_height_frequency
+
+```
+
+```{r Deploy histogram}
+
+ggplot(godzilla_height_df, aes(x=height))+ 
+  geom_histogram(bins=8, color="#17202A", fill="#922B21")+
+  labs(title="Godzilla height.", x="height", y="frequency") + 
+  theme_bw()
+
+```
+
+```{r Display frequency polygon}
+
+ggplot(godzilla_height_df, aes(x=height)) + 
+  geom_freqpoly(bins=8, color="#922B21") +
+  labs(title="Godzilla height.", x="height", y="frequency") + 
+  theme_bw()
+
+```
+
+```{r Display histogram and frequency polygon}
+
+ggplot(godzilla_height_df, aes(x=height))+ 
+  geom_histogram(bins=8, color="#17202A", fill="#922B21")+
+  geom_freqpoly(bins=8, color="#F1C40F")+
+  labs(title="Godzilla height.", x="height", y="frequency") +
+  theme_bw()
+
+```
+
+```{r Create cumulative frequency table}
+
+godzilla_height_frequency_cum = godzilla_height_frequency %>% 
+  mutate(cum_freq = cumsum(frequency))
+
+godzilla_height_frequency_cum
+  
+```
+```{r Deploy ogive curve}
+
+ggplot(godzilla_height_frequency_cum, aes(x=height, y=cum_freq)) +
+  geom_line(color="#922B21", size=1) +
+  geom_point(color="#17202A", size=3) +
+  labs(title="Godzilla height", x="height", y="cumulative frequency") +
+  theme_bw()
+  
+```
+
+```{r Deploy boxplot}
+
+ggplot(godzilla_height_df, aes(x=height)) + 
+  geom_boxplot(bins=8, color="#17202A", fill="#922B21") +
+  labs(title="Godzilla height.", x="height", y="frequency") +
+  theme_bw()
+
+```
+
+```{r Construct table of relative frequencies}
+
+godzilla_height_frequency_rel = godzilla_height_frequency_cum %>% 
+  mutate(
+    freq_rel = (frequency / sum(frequency)) * 100,
+    freq_rel_cum = cumsum(freq_rel)
+  )
+
+godzilla_height_frequency_rel
+
+```
+
+```{r Create a century column and calculate frequency according to that column}
+
+century = c("XX", "XX", "XX", "XX", "XX", "XX", "XX", "XX", "XX", "XX", "XX", "XXI", "XXI", "XXI", "XXI", "XXI", "XXI", "XXI")
+
+godzilla_height_century = godzilla_height_df %>% 
+  mutate(cent = century)
+
+godzilla_century_freq = godzilla_height_century %>% 
+  group_by(cent) %>% 
+  summarise(frequency = n())
+
+godzilla_century_freq
+
+```
+
+```{r Display a bar graphic}
+
+ggplot(godzilla_century_freq, aes(x=cent, y=frequency, fill=cent)) +
+  geom_bar(stat="identity", color="#17202A") +
+  scale_fill_manual(values=palette) +
+  labs(title="Godzilla height in centuries.", x="century", y="frequency") +
+  theme_bw() 
+
+```
+
+```{r Measures of central tendency}
+
+godzilla_mean_height = mean(godzilla_height_df$height)
+godzilla_median_height = median(godzilla_height_df$height)
+godzilla_mode_height = godzilla_height_frequency %>% 
+  arrange(desc(frequency)) %>% 
+  head(1)
+
+cat("The average of Godzilla's heights is: ",  godzilla_mean_height, " meters. \n")
+cat("No more than 50% of Godzilla's heights are over than: ",  godzilla_median_height, " meters. \n")
+cat("The Godzilla's heigth with the highest frequency is: ",  godzilla_mode_height$height, " meters. \n")
+
+```
+
+```{r Measures of position}
+
+godzilla_q25_height = quantile(godzilla_height_df$height, probs=0.25)
+godzilla_q75_height = quantile(godzilla_height_df$height, probs=0.75)
+
+cat("No more than 25% of Godzilla's heigths are over than: ", godzilla_q25_height, " meters. \n")
+cat("No more than 75% of Godzilla's heigths are over than: ", godzilla_q75_height, " meters. \n")
+
+```
+
+```{r Measures of variability} 
+
+godzilla_height_frequency_error = godzilla_height_frequency %>% 
+  mutate(
+    error = height - godzilla_mean_height,
+    error_square = error * error,
+    error_freq = error_square * frequency
+  )
+
+godzilla_height_frequency_error
+
+```
+```{r Calculate variance}
+
+sum_error_freq = sum(godzilla_height_frequency_error$error_freq)
+variance = sum_error_freq / ((sum(godzilla_height_frequency_error$frequency) - 1))
+variance
+
+```
+
+```{r Calculate standard deviation}
+
+st_dev = sqrt(variance)
+cat("The average difference between Godzilla's heights is: ", st_dev, " meters. \n")
+
+```
+
+```{r Calculate amplitude}
+
+amplitude = max(godzilla_height_frequency$height) - min(godzilla_height_frequency$height)
+cat("The difference between the highest and the smallest Godzilla's height is: ", amplitude, " meters. \n")
+
+```
+
+
+```{r Calculate coefficient of variation}
+
+#Lets compare the variation about the height of two types of dinosaurs having in mind the next data:
+
+parvicursor_mean = 0.39
+parvicursor_st_dev = 0.13
+parvicursor_cv = parvicursor_st_dev / parvicursor_mean
+cat("The coefficient of variation to the Parvicursor's height is: ", parvicursor_cv, "\n")
+
+titanosaurio_mean = 40
+titanosaurio_st_dev = 2
+titanosaurio_cv = titanosaurio_st_dev / titanosaurio_mean
+cat("The coefficient of variation to the Tinanosaurio's height is: ", titanosaurio_cv, "\n")
+
+cat("We are able to conclude that there are more variation in the heights of the Parvicursor.")
+
+```
+
+```{r Other form to creat descriptive statistics}
+
+summary(godzilla_height)
+
+```
+
+
+```{r Create a table with two variables}
+
+godzilla_weight =c(20000,20000,20000,20000,20000,50000,50000,60000,60000,500,25000,30000,25000,55000,55000,92000,10000,100000)
+
+godzilla_height_weight = tibble(height=godzilla_height, weight=godzilla_weight)
+godzilla_height_weight
+
+```
+
+```{r Deploy a scatterplot}
+
+ggplot(godzilla_height_weight, aes(x=height, y=weight)) + 
+  geom_point(color="#922B21", size=3) +
+  geom_smooth(method="lm", se=FALSE) +
+  labs(title="Godzilla versions: height vs weight.")
+
+```
+
+```{r Create table to calculate equation of the graphic (linear equation)}
+
+godzilla_height_weight = godzilla_height_weight %>% 
+  mutate(
+    height_mult_weight = height * weight,
+    height_square = height * height,
+    weight_square = weight * weight,
+  )
+
+godzilla_height_weight
+
+```
+
+```{r Display the equation of the graphic}
+
+sum_height = sum(godzilla_height_weight$height)
+sum_weight = sum(godzilla_height_weight$weight)
+sum_height_mult_weight = sum(godzilla_height_weight$height_mult_weight)
+sum_height_square = sum(godzilla_height_weight$height_square)
+sum_weight_square = sum(godzilla_height_weight$weight_square)
+num_rows = nrow(godzilla_height_weight)
+
+A = matrix(c(num_rows,sum_height,sum_height,sum_height_square), nrow=2)
+B = c(sum_weight,sum_height_mult_weight)
+solution = solve(A, B)
+
+cat("The equation of the graphic is: y = ",solution[2],"x + ",solution[1])
+
+```
+
+```{r Deploy equation of the scatterplot}
+
+regression_model = lm(weight ~ height, data=godzilla_height_weight)
+regression_model_df = tidy(regression_model)
+
+cat("The equation of the graphic is: y = ",regression_model_df$estimate[2],"x + ",regression_model_df$estimate[1])
+
+```
+
+```{r Calculate correlation coefficient}
+
+coef_corr = cor(godzilla_height_weight$height, godzilla_height_weight$weight)
+
+cat("The correlation coefficient is: ", coef_corr)
+
+```
+
+```{r Working with weight and long (tibble)}
+
+godzilla_weight_1=c(20000,20000,20000,20000,20000,50000,50000,60000,60000,500,25000,30000,25000,55000,55000,92000)
+godzilla_long=c(122,100,100,100,100,190,190,200,200,120,122.5,120,122.5,200,274,333)
+
+godzilla_weight_long = tibble(weight = godzilla_weight_1, long = godzilla_long)
+godzilla_weight_long
+
+```
+
+```{r Working with weight and long (scatterplot)}
+
+ggplot(godzilla_weight_long, aes(x=weight, y=long)) + 
+  geom_point(color="#922B21", size=3) +
+  geom_smooth(method="lm", se=FALSE) +
+  labs(title="Godzilla versions: weight vs long.")
+
+```
+
+
+```{r Working with weight and long (equation)}
+
+regression_model_1 = lm(long ~ weight, data=godzilla_weight_long)
+regression_model_1_df = tidy(regression_model_1)
+
+cat("The equation of the graphic is: y = ",regression_model_1_df$estimate[2],"x + ",regression_model_1_df$estimate[1])
+
+```
+
+```{r Working with weight and long (correlation coefficient)}
+
+coef_corr_1 = cor(godzilla_weight_long$weight, godzilla_weight_long$long)
+
+cat("The correlation coefficient is: ", coef_corr_1)
+
+```
+
+
